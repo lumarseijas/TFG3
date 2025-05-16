@@ -1,12 +1,13 @@
 % SIMULACIÓN MONTE CARLO CON KALMAN_CV
 %clear; close all; clc;
+addpath(genpath(pwd)); 
 
 % Número de simulaciones Monte Carlo
 N = 200;
 
 % Parámetros del filtro
 T = 4;              % Tiempo de muestreo radar [s]
-sigma_a = 0.5;      % Desviación típica aceleración [m/s^2]
+sigma_a = 2;      % Desviación típica aceleración [m/s^2]
 
 % Generar trayectoria ideal
 [track, radar, projection] = generarTrayectoria();
@@ -51,6 +52,7 @@ errRumbo = errores.rumbo;
 
 % Mostrar duración y errores por tramos
 fprintf('\n--- ANÁLISIS POR TRAMOS ---\n');
+Ltramos = limites_tramos();
 for i = 1:size(tramos,1)
     t_ini = tramos_tiempos(i);
     t_fin = tramos_tiempos(i+1);
@@ -60,8 +62,9 @@ for i = 1:size(tramos,1)
     rmsT = sqrt(mean(errTrans(idx).^2));
     rmsV = sqrt(mean(errVel(idx).^2));
     rmsR = sqrt(mean(errRumbo(idx).^2));
-    fprintf("Tramo %d (%s): Duración %.1f s | RMS Long: %.2f m, Trans: %.2f m, Vel: %.2f m/s, Rumbo: %.2f°\n", ...
-        i, tipos_tramos(i), dur, rmsL, rmsT, rmsV, rmsR);
+    limites = Ltramos.(tipos_tramos(i));
+    fprintf("Tramo %d (%s): Duración %.1f s | RMS Long: %.2f/%.0f m, Trans: %.2f/%.0f m, Vel: %.2f/%.1f m/s, Rumbo: %.2f/%.1f°\n", ...
+        i, tipos_tramos(i), dur, rmsL, limites.long, rmsT, limites.trans, rmsV, limites.vel, rmsR, limites.rumbo);
 end
 
 fprintf('\n--- ANÁLISIS POR TRANSICIONES ---\n');
@@ -69,6 +72,7 @@ for i = 1:(size(tramos,1)-1)
     t_ini = tramos_tiempos(i+1);
     tipo1 = tipos_tramos(i);
     tipo2 = tipos_tramos(i+1);
+    trans_key = tipo1 + "_" + tipo2;
 
     % Buscar cuándo se estabiliza la transición (con rumbo estable)
     idx_start = find(tiempo >= t_ini, 1);
@@ -87,8 +91,9 @@ for i = 1:(size(tramos,1)-1)
     rmsT = sqrt(mean(errTrans(idx).^2));
     rmsV = sqrt(mean(errVel(idx).^2));
     rmsR = sqrt(mean(errRumbo(idx).^2));
-    fprintf("Transición %d (%s -> %s): Duración %.1f s | RMS Long: %.2f m, Trans: %.2f m, Vel: %.2f m/s, Rumbo: %.2f°\n", ...
-        i, tipo1, tipo2, dur, rmsL, rmsT, rmsV, rmsR);
+    limites = limites_transicion(trans_key, dur);
+    fprintf("Transición %d (%s -> %s): Duración %.1f s | RMS Long: %.2f/%.0f m, Trans: %.2f/%.0f m, Vel: %.2f/%.1f m/s, Rumbo: %.2f/%.1f°\n", ...
+        i, tipo1, tipo2, dur, rmsL, limites.long, rmsT, limites.trans, rmsV, limites.vel, rmsR, limites.rumbo);
 end
 
 % Cálculo RMS en ventana móvil (por instante)
@@ -105,11 +110,54 @@ subplot(2,2,2); hold on; plot(tiempo, errTrans_RMS, 'r'); ylabel('Transversal RM
 subplot(2,2,3); hold on; plot(tiempo, errRumbo_RMS, 'r'); ylabel('Rumbo RMS [°]'); xlabel('Tiempo [s]'); title('Rumbo RMS'); grid on;
 subplot(2,2,4); hold on; plot(tiempo, errVel_RMS, 'r'); ylabel('Velocidad RMS [m/s]'); xlabel('Tiempo [s]'); title('Velocidad RMS'); grid on;
 
+ax = gobjects(4,1);
+subplot(2,2,1); ax(1) = gca;
+subplot(2,2,2); ax(2) = gca;
+subplot(2,2,3); ax(3) = gca;
+subplot(2,2,4); ax(4) = gca;
+
+% Pintar líneas de separación de tramos
 for t = tramos_tiempos(2:end-1)
-    subplot(2,2,1); xline(t, 'k--');
-    subplot(2,2,2); xline(t, 'k--');
-    subplot(2,2,3); xline(t, 'k--');
-    subplot(2,2,4); xline(t, 'k--');
+    for k = 1:4
+        xline(ax(k), t, 'k--');
+    end
 end
+
+% Crear tipos reales: tramos + transiciones
+tipos_completos = {};
+t_inis = [];
+t_fins = [];
+
+for i = 1:length(tipos_tramos)
+    % Tramo i
+    tipos_completos{end+1} = tipos_tramos(i);
+    t_inis(end+1) = tramos_tiempos(i);
+    t_fins(end+1) = tramos_tiempos(i+1);
+
+    % Si hay transición con el siguiente
+    if i < length(tipos_tramos)
+        tipo_trans = tipos_tramos(i) + "_" + tipos_tramos(i+1);
+        t_trans_ini = tramos_tiempos(i+1);
+
+        % Duración efectiva detectada
+        idx_start = find(tiempo >= t_trans_ini, 1);
+        dur = NaN;
+        for k = idx_start:(length(tiempo)-5)
+            if std(errRumbo(k:k+4)) < 1.5
+                dur = tiempo(k+4) - t_trans_ini;
+                break;
+            end
+        end
+        if isnan(dur), dur = tiempo(end) - t_trans_ini; end
+
+        tipos_completos{end+1} = tipo_trans;
+        t_inis(end+1) = t_trans_ini;
+        t_fins(end+1) = t_trans_ini + dur;
+    end
+end
+
+% Añadir máscaras
+dibujar_eurocontrol(ax, tiempo, tipos_completos, t_inis, t_fins);
+
 
 sgtitle(['Simulación Monte Carlo con \sigma_a = ', num2str(sigma_a)]);
