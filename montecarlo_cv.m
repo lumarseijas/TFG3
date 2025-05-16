@@ -7,7 +7,7 @@ N = 200;
 
 % Parámetros del filtro
 T = 4;              % Tiempo de muestreo radar [s]
-sigma_a = 2;      % Desviación típica aceleración [m/s^2]
+sigma_a = 0.5;      % Desviación típica aceleración [m/s^2]
 
 % Generar trayectoria ideal
 [track, radar, projection] = generarTrayectoria();
@@ -161,3 +161,61 @@ dibujar_eurocontrol(ax, tiempo, tipos_completos, t_inis, t_fins);
 
 
 sgtitle(['Simulación Monte Carlo con \sigma_a = ', num2str(sigma_a)]);
+
+fprintf('\n--- PORCENTAJE DE INCUMPLIMIENTO EUROCONTROL ---\n');
+fprintf('%-20s %6s %8s %8s %8s %8s\n', 'Segmento', 'Dur(s)', 'Long(%)', 'Trans(%)', 'Vel(%)', 'Rumbo(%)');
+
+% Calcular tramos y transiciones (como antes)
+tipos_completos = {};
+t_inis = [];
+t_fins = [];
+
+for i = 1:length(tipos_tramos)
+    % Tramo
+    tipos_completos{end+1} = tipos_tramos(i);
+    t_inis(end+1) = tramos_tiempos(i);
+    t_fins(end+1) = tramos_tiempos(i+1);
+
+    % Transición
+    if i < length(tipos_tramos)
+        tipo_trans = tipos_tramos(i) + "_" + tipos_tramos(i+1);
+        t_trans_ini = tramos_tiempos(i+1);
+        idx_start = find(tiempo >= t_trans_ini, 1);
+        dur = NaN;
+        for k = idx_start:(length(tiempo)-5)
+            if std(errRumbo(k:k+4)) < 1.5
+                dur = tiempo(k+4) - t_trans_ini;
+                break;
+            end
+        end
+        if isnan(dur), dur = tiempo(end) - t_trans_ini; end
+        tipos_completos{end+1} = tipo_trans;
+        t_inis(end+1) = t_trans_ini;
+        t_fins(end+1) = t_trans_ini + dur;
+    end
+end
+
+% Calcular y mostrar por segmento
+for i = 1:length(tipos_completos)
+    tipo = tipos_completos{i};
+    t0 = t_inis(i);
+    t1 = t_fins(i);
+    dur = t1 - t0;
+    idx = find(tiempo >= t0 & tiempo <= t1);
+
+    if tipo == "uniforme" || tipo == "giro" || tipo == "acelerado"
+        L = limites_tramos();
+        lim = L.(tipo);
+    else
+        lim = limites_transicion(tipo, dur);
+    end
+
+    % % de muestras que incumplen
+    pLong = mean(errLong_RMS(idx) > lim.long)*100;
+    pTrans = mean(errTrans_RMS(idx) > lim.trans)*100;
+    pVel = mean(errVel_RMS(idx) > lim.vel)*100;
+    pRumbo = mean(errRumbo_RMS(idx) > lim.rumbo)*100;
+
+    fprintf('%-20s %6.1f %8.1f %8.1f %8.1f %8.1f\n', ...
+        tipo, dur, pLong, pTrans, pVel, pRumbo);
+end
