@@ -34,4 +34,3 @@ legend('Trayectoria ideal', 'Medidas radar', 'Kalman estimado');
 xlabel('X [m]');
 ylabel('Y [m]');
 title(['Comparación de trayectorias - \sigma_a = ', num2str(sigma_a), ' m/s^2']);
-
