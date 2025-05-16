@@ -6,7 +6,7 @@ target_ideal = ideal_measurement(track, radar, projection);
 target_real  = real_measurement(target_ideal, radar, 1, 1, 0, 0, 0, projection);
 
 T = radar(1).Tr;  % tiempo de muestreo (4 s)
-sigma_a = 1.5;    % o cualquier valor que estés probando
+sigma_a = 2.5;    % o cualquier valor que estés probando
 
 estimacion = kalman_cv(target_real(1), T, sigma_a);
 
