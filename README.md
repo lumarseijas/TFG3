@@ -5,4 +5,4 @@
 
 # MONTECARLO CON KALMAN_CV VIENDO CON MÁSCARA EUROCONTROL
 
-![montecarlo_CV_EURO](img/montecarlo_cv_EURO.png)
+![montecarlo_CV_EURO](img/montecarlo_CV_EURO.png)
