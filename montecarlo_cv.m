@@ -49,8 +49,50 @@ errTrans = errores.transversal;
 errVel = errores.velocidad;
 errRumbo = errores.rumbo;
 
+% Mostrar duración y errores por tramos
+fprintf('\n--- ANÁLISIS POR TRAMOS ---\n');
+for i = 1:size(tramos,1)
+    t_ini = tramos_tiempos(i);
+    t_fin = tramos_tiempos(i+1);
+    dur = t_fin - t_ini;
+    idx = find(tiempo >= t_ini & tiempo < t_fin);
+    rmsL = sqrt(mean(errLong(idx).^2));
+    rmsT = sqrt(mean(errTrans(idx).^2));
+    rmsV = sqrt(mean(errVel(idx).^2));
+    rmsR = sqrt(mean(errRumbo(idx).^2));
+    fprintf("Tramo %d (%s): Duración %.1f s | RMS Long: %.2f m, Trans: %.2f m, Vel: %.2f m/s, Rumbo: %.2f°\n", ...
+        i, tipos_tramos(i), dur, rmsL, rmsT, rmsV, rmsR);
+end
+
+fprintf('\n--- ANÁLISIS POR TRANSICIONES ---\n');
+for i = 1:(size(tramos,1)-1)
+    t_ini = tramos_tiempos(i+1);
+    tipo1 = tipos_tramos(i);
+    tipo2 = tipos_tramos(i+1);
+
+    % Buscar cuándo se estabiliza la transición (con rumbo estable)
+    idx_start = find(tiempo >= t_ini, 1);
+    dur = NaN;
+    for k = idx_start:(length(tiempo)-5)
+        if std(errRumbo(k:k+4)) < 1.5
+            dur = tiempo(k+4) - t_ini;
+            break;
+        end
+    end
+    if isnan(dur)
+        dur = tiempo(end) - t_ini;
+    end
+    idx = find(tiempo >= t_ini & tiempo < t_ini + dur);
+    rmsL = sqrt(mean(errLong(idx).^2));
+    rmsT = sqrt(mean(errTrans(idx).^2));
+    rmsV = sqrt(mean(errVel(idx).^2));
+    rmsR = sqrt(mean(errRumbo(idx).^2));
+    fprintf("Transición %d (%s -> %s): Duración %.1f s | RMS Long: %.2f m, Trans: %.2f m, Vel: %.2f m/s, Rumbo: %.2f°\n", ...
+        i, tipo1, tipo2, dur, rmsL, rmsT, rmsV, rmsR);
+end
+
 % Cálculo RMS en ventana móvil (por instante)
-ventana = 1;  % 1 muestra cada 4s (T muestreo)
+ventana = 1;  % 1 muestra = 4 s
 errLong_RMS = sqrt(movmean(errLong.^2, ventana));
 errTrans_RMS = sqrt(movmean(errTrans.^2, ventana));
 errVel_RMS = sqrt(movmean(errVel.^2, ventana));
@@ -63,8 +105,7 @@ subplot(2,2,2); hold on; plot(tiempo, errTrans_RMS, 'r'); ylabel('Transversal RM
 subplot(2,2,3); hold on; plot(tiempo, errRumbo_RMS, 'r'); ylabel('Rumbo RMS [°]'); xlabel('Tiempo [s]'); title('Rumbo RMS'); grid on;
 subplot(2,2,4); hold on; plot(tiempo, errVel_RMS, 'r'); ylabel('Velocidad RMS [m/s]'); xlabel('Tiempo [s]'); title('Velocidad RMS'); grid on;
 
-% Añadir líneas verticales de cambio de tramo en todos los subplots
-for t = tramos_tiempos(2:end-1)  % sin primera ni última
+for t = tramos_tiempos(2:end-1)
     subplot(2,2,1); xline(t, 'k--');
     subplot(2,2,2); xline(t, 'k--');
     subplot(2,2,3); xline(t, 'k--');
