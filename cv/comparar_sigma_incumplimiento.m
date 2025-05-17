@@ -2,7 +2,7 @@
 %clear; close all; clc;
 addpath(genpath(pwd));
 
-sigmas = [0.1 0.25 0.5 1 1.5 2 2.5 3 3.5 4 4.5 5 5.5 6 6.5 7 7.5 8 8.5 9 9.5 10];  % valores a probar
+sigmas = [0.1 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.8];  % valores a probar
 T = 4;              % Tiempo de muestreo radar [s]
 N = 200;            % Número de simulaciones Monte Carlo
 
@@ -44,6 +44,7 @@ for s = 1:length(sigmas)
     % Usar primera simulación para errores RMS por instante
     errores = erroresAcumulados(1);
     tiempo = errores.tiempo;
+    errRumbo = errores.rumbo;
     errLong_RMS = sqrt(movmean(errores.longitudinal.^2, 1));
     errTrans_RMS = sqrt(movmean(errores.transversal.^2, 1));
     errVel_RMS = sqrt(movmean(errores.velocidad.^2, 1));
@@ -125,3 +126,8 @@ mejor_sigma = resultados(idx_best,1);
 mejor_media = media_incumpl(idx_best);
 
 fprintf('\\n>> El mejor valor de σₐ es %.2f con un incumplimiento medio total del %.2f%%\\n', mejor_sigma, mejor_media);
+
+plot(resultados(:,1), mean(resultados(:,2:5), 2), '-o');
+xlabel('\sigma_a'); ylabel('Incumplimiento medio [%]');
+title('Incumplimiento medio según \sigma_a');
+grid on;

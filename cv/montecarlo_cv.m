@@ -7,7 +7,7 @@ N = 200;
 
 % Parámetros del filtro
 T = 4;              % Tiempo de muestreo radar [s]
-sigma_a = 0.5;      % Desviación típica aceleración [m/s^2]
+sigma_a = 10;      % Desviación típica aceleración [m/s^2]
 
 % Generar trayectoria ideal
 [track, radar, projection] = generarTrayectoria();
@@ -41,7 +41,6 @@ for i = 1:N
     errores = calcularErrores(track(1), trkEstimada);
     erroresAcumulados(i) = errores;
 end
-
 
 % Usar solo la primera ejecución para análisis detallado
 errores = erroresAcumulados(1);
@@ -220,4 +219,3 @@ for i = 1:length(tipos_completos)
     fprintf('%-20s %6.1f %8.1f %8.1f %8.1f %8.1f\n', ...
         tipo, dur, pLong, pTrans, pVel, pRumbo);
 end
-
