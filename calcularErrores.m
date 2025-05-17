@@ -13,13 +13,17 @@ function errores = calcularErrores(trkIdeal, trkEstimada)
 t = trkEstimada.tiempo(:);
 xi = interp1(trkIdeal.tiempo, trkIdeal.posStereo(:,1), t, 'linear', 'extrap');
 yi = interp1(trkIdeal.tiempo, trkIdeal.posStereo(:,2), t, 'linear', 'extrap');
-vi = interp1(trkIdeal.tiempo, trkIdeal.velocidad, t, 'linear', 'extrap');
+vi = interp1(trkIdeal.tiempo, trkIdeal.velocidad, t, 'linear', 'extrap'); %vel_real
 ri = interp1(trkIdeal.tiempo, trkIdeal.rumbo, t, 'linear', 'extrap');
 
 % Posición y velocidad estimadas
 xe = trkEstimada.posStereo(:,1);
 ye = trkEstimada.posStereo(:,2);
-ve = trkEstimada.velocidad;
+%ve = trkEstimada.velocidad;
+vx = trkEstimada.vel(:,1);
+vy = trkEstimada.vel(:,2);
+ve = sqrt(vx.^2 + vy.^2);
+
 re = trkEstimada.rumbo;
 
 % Vector tangente y normal a la trayectoria ideal

@@ -2,7 +2,7 @@
 %clear; close all; clc;
 addpath(genpath(pwd));
 
-sigmas = [0.1 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.8];  % valores a probar
+sigmas = [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 3.0 5.0 7.0 9.0 10.0];  % valores a probar
 T = 4;              % Tiempo de muestreo radar [s]
 N = 200;            % Número de simulaciones Monte Carlo
 
@@ -37,6 +37,7 @@ for s = 1:length(sigmas)
         trkEstimada.velocidad = estimacion.vel_mod;
         trkEstimada.rumbo = estimacion.rumbo;
         trkEstimada.tiempo = target(1).measure(:,2);
+        trkEstimada.vel = estimacion.vel;
         errores = calcularErrores(track(1), trkEstimada);
         erroresAcumulados(i) = errores;
     end
@@ -56,9 +57,24 @@ for s = 1:length(sigmas)
     t_fins = [];
 
     for i = 1:length(tipos_tramos)
-        tipos_completos{end+1} = tipos_tramos(i);
-        t_inis(end+1) = tramos_tiempos(i);
-        t_fins(end+1) = tramos_tiempos(i+1);
+        % tipos_completos{end+1} = tipos_tramos(i);
+        % t_inis(end+1) = tramos_tiempos(i);
+        % t_fins(end+1) = tramos_tiempos(i+1);
+
+        [~, umbral] = limites_transicion(tipo_trans, 0);
+        if dur > umbral
+            tipos_completos{end+1} = tipo_trans + "_1";
+            t_inis(end+1) = t_trans_ini;
+            t_fins(end+1) = t_trans_ini + umbral;
+        
+            tipos_completos{end+1} = tipo_trans + "_2";
+            t_inis(end+1) = t_trans_ini + umbral;
+            t_fins(end+1) = t_trans_ini + dur;
+        else
+            tipos_completos{end+1} = tipo_trans;
+            t_inis(end+1) = t_trans_ini;
+            t_fins(end+1) = t_trans_ini + dur;
+        end
 
         if i < length(tipos_tramos)
             tipo_trans = tipos_tramos(i) + "_" + tipos_tramos(i+1);
@@ -71,7 +87,14 @@ for s = 1:length(sigmas)
                     break;
                 end
             end
-            if isnan(dur), dur = tiempo(end) - t_trans_ini; end
+            %if isnan(dur), dur = tiempo(end) - t_trans_ini; end
+            if isnan(dur)
+                dur = tiempo(end) - t_ini;
+            end
+    % Nueva línea para no exceder duración del siguiente tramo
+    dur_max = tramos_tiempos(i+2) - t_ini;
+    dur = min(dur, dur_max);
+
             tipos_completos{end+1} = tipo_trans;
             t_inis(end+1) = t_trans_ini;
             t_fins(end+1) = t_trans_ini + dur;
@@ -90,12 +113,25 @@ for s = 1:length(sigmas)
         idx = find(tiempo >= t0 & tiempo <= t1);
         total_puntos = total_puntos + length(idx);
 
+        % if tipo == "uniforme" || tipo == "giro" || tipo == "acelerado"
+        %     L = limites_tramos();
+        %     lim = L.(tipo);
+        % else
+        %     lim = limites_transicion(tipo, dur);
+        % end
         if tipo == "uniforme" || tipo == "giro" || tipo == "acelerado"
             L = limites_tramos();
             lim = L.(tipo);
+        elseif endsWith(tipo, "_1")
+            base = extractBefore(tipo, "_1");
+            [lim, ~] = limites_transicion(base, 0);  % antes del umbral
+        elseif endsWith(tipo, "_2")
+            base = extractBefore(tipo, "_2");
+            [lim, ~] = limites_transicion(base, 999);  % después del umbral
         else
-            lim = limites_transicion(tipo, dur);
+            [lim, ~] = limites_transicion(tipo, dur);
         end
+
 
         incumpl_long = incumpl_long + sum(errLong_RMS(idx) > lim.long);
         incumpl_trans = incumpl_trans + sum(errTrans_RMS(idx) > lim.trans);

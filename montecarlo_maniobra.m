@@ -1,16 +1,14 @@
 % MONTECARLO con filtro Kalman con detección de maniobra
-%clear; close all; clc;
 addpath(genpath(pwd));
 
 %% 1) Parámetros
-N = 200;             % Número de simulaciones
-T = 4;               % Tiempo de muestreo radar
+N = 200;             
+T = 4;               
 
-% Parámetros del filtro adaptativo
-sigma_a_normal   = 0.001;
-sigma_a_maniobra = 10;
+sigma_a_normal   = 0.01;
+sigma_a_maniobra = 5;
 alpha            = 0.2;
-PFA              = 0.05;
+PFA              = 0.03;
 
 %% 2) Trayectoria ideal
 [track, radar, projection] = generarTrayectoria();
@@ -38,23 +36,12 @@ for i = 1:N
     trkEstimada.velocidad = estimacion.vel_mod;
     trkEstimada.rumbo = estimacion.rumbo;
     trkEstimada.tiempo = target(1).measure(:,2);
+    trkEstimada.vel = estimacion.vel; 
     errores = calcularErrores(track(1), trkEstimada);
     erroresAcumulados(i) = errores;
 end
 
-% Extraer vectores
-t = trkEstimada.tiempo(:);  % Tiempos de la estimación
-vi = interp1(track(1).tiempo, track(1).velocidad, t, 'linear', 'extrap');  % Velocidad ideal interpolada
-ve = trkEstimada.velocidad(:);  % Velocidad estimada
-err = ve - vi;  % Error
-
-% Mostrar los resultados en formato tabla
-fprintf('   Tiempo (s)   |  Vel. Ideal (m/s)  |  Vel. Estimada (m/s)  |  Error (m/s)\n');
-fprintf('--------------------------------------------------------------------------\n');
-for i = 1:20  % Puedes cambiar el 20 por más si quieres ver más líneas
-    fprintf('%10.3f     |     %10.3f     |     %10.3f     |   %8.3f\n', t(i), vi(i), ve(i), err(i));
-end
-%% 4) Análisis con primera ejecución (como referencia gráfica)
+%% 4) Análisis con primera ejecución
 errores = erroresAcumulados(1);
 tiempo = errores.tiempo;
 errLong = errores.longitudinal;
@@ -62,13 +49,13 @@ errTrans = errores.transversal;
 errVel = errores.velocidad;
 errRumbo = errores.rumbo;
 
-% RMS por instante (ventana 1 muestra)
-errLong_RMS = sqrt(movmean(errLong.^2, 1));
-errTrans_RMS = sqrt(movmean(errTrans.^2, 1));
-errVel_RMS = sqrt(movmean(errVel.^2, 1));
-errRumbo_RMS = sqrt(movmean(errRumbo.^2, 1));
+% ventana = 1;
+% errLong_RMS = sqrt(movmean(errLong.^2, ventana));
+% errTrans_RMS = sqrt(movmean(errTrans.^2, ventana));
+% errVel_RMS = sqrt(movmean(errVel.^2, ventana));
+% errRumbo_RMS = sqrt(movmean(errRumbo.^2, ventana));
 
-% Crear tipos completos (tramos + transiciones)
+%% 5) Segmentación tramos + transiciones
 tipos_completos = {};
 t_inis = []; t_fins = [];
 
@@ -76,9 +63,11 @@ for i = 1:length(tipos_tramos)
     tipos_completos{end+1} = tipos_tramos(i);
     t_inis(end+1) = tramos_tiempos(i);
     t_fins(end+1) = tramos_tiempos(i+1);
+    
     if i < length(tipos_tramos)
         tipo_trans = tipos_tramos(i) + "_" + tipos_tramos(i+1);
         t_trans_ini = tramos_tiempos(i+1);
+
         idx_start = find(tiempo >= t_trans_ini, 1);
         dur = NaN;
         for k = idx_start:(length(tiempo)-5)
@@ -88,18 +77,70 @@ for i = 1:length(tipos_tramos)
             end
         end
         if isnan(dur), dur = tiempo(end) - t_trans_ini; end
-        tipos_completos{end+1} = tipo_trans;
-        t_inis(end+1) = t_trans_ini;
-        t_fins(end+1) = t_trans_ini + dur;
+        dur_max = tramos_tiempos(i+2) - t_trans_ini;
+        dur = min(dur, dur_max);
+
+        [~, umbral] = limites_transicion(tipo_trans, 0);
+        if dur > umbral
+            tipos_completos{end+1} = tipo_trans + "_1";
+            t_inis(end+1) = t_trans_ini;
+            t_fins(end+1) = t_trans_ini + umbral;
+
+            tipos_completos{end+1} = tipo_trans + "_2";
+            t_inis(end+1) = t_trans_ini + umbral;
+            t_fins(end+1) = t_trans_ini + dur;
+        else
+            tipos_completos{end+1} = tipo_trans;
+            t_inis(end+1) = t_trans_ini;
+            t_fins(end+1) = t_trans_ini + dur;
+        end
     end
 end
 
-%% 5) Porcentaje de incumplimiento EUROCONTROL
-fprintf('\n--- FILTRO CON MANIOBRA ---\n');
-fprintf('σa normal: %.2f, σa maniobra: %.2f, α: %.2f, PFA: %.3f\n', ...
-    sigma_a_normal, sigma_a_maniobra, alpha, PFA);
-fprintf('\n%-20s %6s %8s %8s %8s %8s\n', ...
-    'Segmento', 'Dur(s)', 'Long(%)', 'Trans(%)', 'Vel(%)', 'Rumbo(%)');
+%% 6) Tabla resumen RMS
+fprintf('## Análisis por Tramos y Transiciones (Filtro con Maniobra)\n\n');
+fprintf('| # | Tipo              | Duración (s) | Long (RMS / Max) | Trans (RMS / Max) | Vel (RMS / Max) | Rumbo (RMS / Max) |\n');
+fprintf('|----|-------------------|--------------|-------------------|--------------------|------------------|--------------------|\n');
+
+for i = 1:length(tipos_completos)
+    tipo = tipos_completos{i};
+    t0 = t_inis(i);
+    t1 = t_fins(i);
+    dur = t1 - t0;
+    idx = find(tiempo >= t0 & tiempo < t1);
+
+    if tipo == "uniforme" || tipo == "giro" || tipo == "acelerado"
+        L = limites_tramos(); lim = L.(tipo);
+    elseif endsWith(tipo, "_1")
+        base = extractBefore(tipo, "_1");
+        [lim, ~] = limites_transicion(base, 0);
+    elseif endsWith(tipo, "_2")
+        base = extractBefore(tipo, "_2");
+        [lim, ~] = limites_transicion(base, 999);
+    else
+        [lim, ~] = limites_transicion(tipo, dur);
+    end
+
+    rmsL = sqrt(mean(errLong(idx).^2));
+    rmsT = sqrt(mean(errTrans(idx).^2));
+    rmsV = sqrt(mean(errVel(idx).^2));
+    rmsR = sqrt(mean(errRumbo(idx).^2));
+    tipo_disp = erase(tipo, ["_1", "_2"]);
+
+    fprintf('| %2d | %-17s | %10.1f | %7.2f / %-5.0f   | %7.2f / %-5.0f    | %6.2f / %-4.1f    | %6.2f / %-4.1f    |\n', ...
+        i, tipo_disp, dur, rmsL, lim.long, rmsT, lim.trans, rmsV, lim.vel, rmsR, lim.rumbo);
+end
+% RMS instantáneo
+ventana = 1;
+errLong_RMS = sqrt(movmean(errLong.^2, ventana));
+errTrans_RMS = sqrt(movmean(errTrans.^2, ventana));
+errVel_RMS = sqrt(movmean(errVel.^2, ventana));
+errRumbo_RMS = sqrt(movmean(errRumbo.^2, ventana));
+
+%% 7) Porcentajes de incumplimiento
+fprintf('\n## Porcentaje de Incumplimiento EUROCONTROL\n\n');
+fprintf('| Segmento           | Duración (s) | Longitud (%%) | Transversal (%%) | Velocidad (%%) | Rumbo (%%) |\n');
+fprintf('|--------------------|--------------|----------------|-------------------|----------------|------------|\n');
 
 for i = 1:length(tipos_completos)
     tipo = tipos_completos{i};
@@ -109,41 +150,39 @@ for i = 1:length(tipos_completos)
 
     if tipo == "uniforme" || tipo == "giro" || tipo == "acelerado"
         L = limites_tramos(); lim = L.(tipo);
+    elseif endsWith(tipo, "_1")
+        base = extractBefore(tipo, "_1");
+        [lim, ~] = limites_transicion(base, 0);
+    elseif endsWith(tipo, "_2")
+        base = extractBefore(tipo, "_2");
+        [lim, ~] = limites_transicion(base, 999);
     else
-        lim = limites_transicion(tipo, dur);
+        [lim, ~] = limites_transicion(tipo, dur);
     end
 
-    pLong  = mean(errLong_RMS(idx)  > lim.long) * 100;
-    pTrans = mean(errTrans_RMS(idx) > lim.trans) * 100;
-    pVel   = mean(errVel_RMS(idx)   > lim.vel) * 100;
-    pRumbo = mean(errRumbo_RMS(idx) > lim.rumbo) * 100;
+    pLong = mean(errLong_RMS(idx) > lim.long)*100;
+    pTrans = mean(errTrans_RMS(idx) > lim.trans)*100;
+    pVel = mean(errVel_RMS(idx) > lim.vel)*100;
+    pRumbo = mean(errRumbo_RMS(idx) > lim.rumbo)*100;
 
-    fprintf('%-20s %6.1f %8.1f %8.1f %8.1f %8.1f\n', tipo, dur, pLong, pTrans, pVel, pRumbo);
+    fprintf('| %-18s | %10.1f | %12.1f | %15.1f | %13.1f | %10.1f |\n', ...
+        tipo, dur, pLong, pTrans, pVel, pRumbo);
 end
-%% 6) Dibujar RMS + bandas EUROCONTROL
+
+%% 8) Gráficas RMS
 figure;
 subplot(2,2,1); hold on; plot(tiempo, errLong_RMS, 'r'); ylabel('Longitudinal RMS [m]'); title('Longitudinal RMS'); grid on;
 subplot(2,2,2); hold on; plot(tiempo, errTrans_RMS, 'r'); ylabel('Transversal RMS [m]'); title('Transversal RMS'); grid on;
 subplot(2,2,3); hold on; plot(tiempo, errRumbo_RMS, 'r'); ylabel('Rumbo RMS [°]'); xlabel('Tiempo [s]'); title('Rumbo RMS'); grid on;
 subplot(2,2,4); hold on; plot(tiempo, errVel_RMS, 'r'); ylabel('Velocidad RMS [m/s]'); xlabel('Tiempo [s]'); title('Velocidad RMS'); grid on;
 
-% Obtener ejes
 ax = gobjects(4,1);
-subplot(2,2,1); ax(1) = gca;
-subplot(2,2,2); ax(2) = gca;
-subplot(2,2,3); ax(3) = gca;
-subplot(2,2,4); ax(4) = gca;
-
-% Pintar líneas de separación de tramos
+for k = 1:4, ax(k) = subplot(2,2,k); end
 for t = tramos_tiempos(2:end-1)
     for k = 1:4
         xline(ax(k), t, 'k--');
     end
 end
-
-% Dibujar bandas verdes de límites
 dibujar_eurocontrol(ax, tiempo, tipos_completos, t_inis, t_fins);
-
-sgtitle(sprintf('Filtro Kalman con maniobra (\\sigma_n = %.2f, \\sigma_m = %.2f, \\alpha = %.2f fa = %.2f)', ...
+sgtitle(sprintf('Filtro Kalman con maniobra (\\sigma_n = %.2f, \\sigma_m = %.2f, \\alpha = %.2f, PFA = %.2f)', ...
     sigma_a_normal, sigma_a_maniobra, alpha, PFA));
-
