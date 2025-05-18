@@ -9,60 +9,61 @@
 
 ---
 
-## Análisis por Tramos y Transiciones (σₐ = 1.0)
+## Análisis por Tramos y Transiciones (σₐ = 3.0)
 
 | # | Tipo              | Duración (s) | Long (RMS / Max) | Trans (RMS / Max) | Vel (RMS / Max) | Rumbo (RMS / Max) |
 |----|-------------------|--------------|-------------------|--------------------|------------------|--------------------|
-|  1 | uniforme          |      240.0 |   65.19 / 60      |   86.75 / 60       |   7.86 / 0.6     |  17.72 / 0.7     |
-|  2 | uniforme_giro     |       24.0 |  244.15 / 140     |  126.52 / 230      |   9.97 / 6.0     |  15.63 / 17.0    |
-|  3 | uniforme_giro     |       34.2 |  623.19 / 140     |  237.19 / 215      |   6.92 / 6.0     |  27.53 / 14.5    |
-|  4 | giro              |       98.0 |  411.33 / 100     |  331.47 / 100      |  11.24 / 4.0     |  22.41 / 6.0     |
-|  5 | giro_uniforme     |       32.1 |  147.02 / 100     |   77.41 / 100      |   3.54 / 4.0     |   6.98 / 6.0     |
-|  6 | uniforme          |      262.0 |   64.99 / 60      |  103.28 / 60       |   4.55 / 0.6     |   2.62 / 0.7     |
-
-## Porcentaje de Incumplimiento EUROCONTROL (σₐ = 1.0)
+|  1 | uniforme          |      240.0 |    7.97 / 60      |    8.63 / 60       |   1.46 / 0.6     |  17.46 / 0.7     |
+|  2 | uniforme_giro     |       24.0 |   70.88 / 140     |   44.77 / 230      |   5.01 / 6.0     |   9.77 / 17.0    |
+|  3 | uniforme_giro     |        8.6 |  176.73 / 140     |   29.68 / 215      |   6.23 / 6.0     |  14.93 / 14.5    |
+|  4 | giro              |       98.0 |  112.00 / 100     |   83.17 / 100      |   6.07 / 4.0     |  11.65 / 6.0     |
+|  5 | giro_uniforme     |       22.5 |   25.97 / 100     |   11.80 / 100      |   3.06 / 4.0     |   2.10 / 6.0     |
+|  6 | uniforme          |      262.0 |    7.99 / 60      |   13.19 / 60       |   1.23 / 0.6     |   0.66 / 0.7     |
+## Porcentaje de Incumplimiento EUROCONTROL (σₐ = 3.0)
 
 | Segmento           | Duración (s) | Longitud (%) | Transversal (%) | Velocidad (%) | Rumbo (%) |
 |--------------------|--------------|----------------|-------------------|----------------|------------|
-| uniforme           |      240.0 |         41.7 |            50.0 |          90.0 |       78.3 |
-| uniforme_giro_1    |       24.0 |         50.0 |             0.0 |          33.3 |       50.0 |
-| uniforme_giro_2    |       34.2 |        100.0 |            44.4 |          44.4 |      100.0 |
-| giro               |       98.0 |         79.2 |            70.8 |          70.8 |       95.8 |
-| giro_uniforme      |       32.1 |         44.4 |            44.4 |          44.4 |       22.2 |
-| uniforme           |      262.0 |         24.2 |            53.0 |          84.8 |       59.1 |
-
+| uniforme           |      240.0 |          0.0 |             0.0 |          48.3 |        8.3 |
+| uniforme_giro_1    |       24.0 |          0.0 |             0.0 |          50.0 |        0.0 |
+| uniforme_giro_2    |        8.6 |        100.0 |             0.0 |          33.3 |       66.7 |
+| giro               |       98.0 |         40.0 |            32.0 |          64.0 |       96.0 |
+| giro_uniforme      |       22.5 |          0.0 |             0.0 |           0.0 |        0.0 |
+| uniforme           |      262.0 |          0.0 |             1.5 |          48.5 |       10.6 |
 
 ---
 ### COMPARACIÓN DE INCUMPLIMIENTO PARA DISTINTOS σ_a 
 
-| σₐ   | Longitud (%) | Transversal (%) | Velocidad (%) | Rumbo (%) |
-|------|---------------|------------------|----------------|-------------|
-| 0.10 | 74.0          | 94.2             | 96.2           | 51.9        |
-| 0.20 | 100.0         | 100.0            | 80.0           | 53.3        |
-| 0.30 | 78.9          | 100.0            | 76.3           | 39.5        |
-| 0.40 | 93.8          | 75.0             | 81.2           | 37.5        |
-| 0.50 | 65.6          | 46.9             | 81.2           | 28.1        |
-| 0.60 | 55.2          | 51.7             | 86.2           | 31.0        |
-| 0.70 | 48.0          | 72.0             | 52.0           | 24.0    |
-| 0.80 | 50.0          | 50.0             | 75.0           | 25.0        |
-| 0.90 | 37.5          | 50.0             | 87.5           | 25.0        |
-| **1.00** | **50.0**     | **25.0**          | **25.0**         | **37.5**        |
-| 3.00 | 10.9          | 63.0             | 91.3           | 37.0        |
-| 5.00 | 0.0       | 57.1             | 85.7           | 21.4        |
-| 7.00 | 18.8          | 60.9             | 93.5           | 67.4        |
-| 9.00 | 24.9          | 59.7             | 97.8           | 69.6        |
-| 10.00| 28.7          | 71.8             | 91.2           | 75.7        |
+| σₐ   | Long (%) | Trans (%) | Vel (%) | Rumbo (%) |
+|------|----------|-----------|---------|-----------|
+| 0.10 |   49.7   |    63.2   |  54.9   |   50.8    |
+| 0.20 |   36.2   |    46.5   |  44.9   |   38.9    |
+| 0.30 |   32.6   |    38.1   |  39.8   |   35.4    |
+| 0.40 |   29.8   |    31.5   |  37.6   |   31.5    |
+| 0.50 |   26.7   |    24.4   |  36.4   |   31.2    |
+| 0.60 |   24.6   |    21.1   |  32.6   |   30.3    |
+| 0.70 |   23.7   |    19.1   |  33.5   |   27.7    |
+| 0.80 |   22.7   |    16.3   |  32.0   |   27.3    |
+| 0.90 |   21.6   |    15.2   |  32.2   |   27.5    |
+| 1.00 |   20.5   |    13.5   |  31.6   |   26.9    |
+| **3.00** | **8.5** | **4.9** | **46.3** | **21.3** |
+| 5.00 |    2.5   |     0.0   |  58.0   |   21.0    |
+| 7.00 |    0.0   |     0.0   |  66.0   |   27.8    |
+| 9.00 |    0.0   |     0.0   |  66.5   |   28.0    |
+|10.00 |    0.0   |     0.0   |  70.2   |   35.4    |
 
 
-El mejor valor de σₐ es **1.00** con un incumplimiento medio total del 34.38%
+El mejor valor de σₐ es **3.00** con un incumplimiento medio total del 20.27%
 
-| σₐ       | Comportamiento global                            | Tramos rectos                    | Tramos de giro               | Robustez global |
-| -------- | ------------------------------------------------ | -------------------------------- | ---------------------------- | --------------- |
-| **0.5**  | Muy rígido, no sigue maniobras                   |  Muy preciso                    |  Incumple gravemente        |  Baja          |
-| **1.0**  | Razonablemente equilibrado                       |  Muy bueno                      |  Falla en giros cortos     | ️ Aceptable    |
-| **3.0**  | Óptimo balance entre respuesta y estabilidad |  Algo más ruido                |  Bien adaptado              |  Alta          |
-| **5.0**  | Flexible, pero ruidoso                           |  Incumple en rectas             |  Adapta giros medianamente |  Baja          |
-| **10.0** | Demasiado laxo                                   |  Mucho error fuera de maniobras |  Adapta bien               |  Muy baja      |
+<img src="img/comparacion_sigmas_cv.png" width="500"/>
+
+
+| σₐ       | Comportamiento global                        | Tramos rectos                                 | Tramos de giro                                   | Robustez global |
+| -------- | -------------------------------------------- | --------------------------------------------- | ------------------------------------------------ | --------------- |
+| **0.5**  | Muy rígido, gran error en maniobras          | Muy bajo error (6 m y 120 m RMS)              | Error muy alto (852 m, 587 m)                    |  Baja         |
+| **1.0**  | Más equilibrado, mejora notable en giros     | Bajo error (43 m)                             | Sigue fallando en giros cortos (498 m)           |  Aceptable    |
+| **3.0**  | Buen compromiso entre rigidez y flexibilidad | Aumenta ligeramente el error (7–8 m)          | Giros mucho mejor seguidos (113 m)               |  Alta         |
+| **5.0**  | Más flexible pero ruido y errores visibles   | Más error en rectas (8.2 m y 4.8 m), aún bajo | Giros suaves, pero pierde precisión (68 m)       |  Media        |
+| **10.0** | Muy laxo, pierde precisión en zonas estables | RMS hasta 12.9 m en rectas                    | Sigue bien los giros (27.4 m) pero poco realista |  Muy baja     |
 
 
 ## KALMAN MANIOBRA

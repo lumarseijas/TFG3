@@ -42,40 +42,37 @@ for s = 1:length(sigmas)
         erroresAcumulados(i) = errores;
     end
 
-    % Usar primera simulación para errores RMS por instante
-    errores = erroresAcumulados(1);
-    tiempo = errores.tiempo;
-    errRumbo = errores.rumbo;
-    errLong_RMS = sqrt(movmean(errores.longitudinal.^2, 1));
-    errTrans_RMS = sqrt(movmean(errores.transversal.^2, 1));
-    errVel_RMS = sqrt(movmean(errores.velocidad.^2, 1));
-    errRumbo_RMS = sqrt(movmean(errores.rumbo.^2, 1));
+    % Promediar errores sobre las N simulaciones
+    tiempo = erroresAcumulados(1).tiempo;
+    errLong = zeros(size(tiempo));
+    errTrans = zeros(size(tiempo));
+    errVel = zeros(size(tiempo));
+    errRumbo = zeros(size(tiempo));
+    for i = 1:N
+        errLong = errLong + erroresAcumulados(i).longitudinal;
+        errTrans = errTrans + erroresAcumulados(i).transversal;
+        errVel = errVel + erroresAcumulados(i).velocidad;
+        errRumbo = errRumbo + erroresAcumulados(i).rumbo;
+    end
+    errLong = errLong / N;
+    errTrans = errTrans / N;
+    errVel = errVel / N;
+    errRumbo = errRumbo / N;
 
-    % Recalcular todos los segmentos
+    ventana = 1;
+    errLong_RMS = sqrt(movmean(errLong.^2, ventana));
+    errTrans_RMS = sqrt(movmean(errTrans.^2, ventana));
+    errVel_RMS = sqrt(movmean(errVel.^2, ventana));
+    errRumbo_RMS = sqrt(movmean(errRumbo.^2, ventana));
+
+    % Recalcular segmentos
     tipos_completos = {};
     t_inis = [];
     t_fins = [];
-
     for i = 1:length(tipos_tramos)
-        % tipos_completos{end+1} = tipos_tramos(i);
-        % t_inis(end+1) = tramos_tiempos(i);
-        % t_fins(end+1) = tramos_tiempos(i+1);
-
-        [~, umbral] = limites_transicion(tipo_trans, 0);
-        if dur > umbral
-            tipos_completos{end+1} = tipo_trans + "_1";
-            t_inis(end+1) = t_trans_ini;
-            t_fins(end+1) = t_trans_ini + umbral;
-        
-            tipos_completos{end+1} = tipo_trans + "_2";
-            t_inis(end+1) = t_trans_ini + umbral;
-            t_fins(end+1) = t_trans_ini + dur;
-        else
-            tipos_completos{end+1} = tipo_trans;
-            t_inis(end+1) = t_trans_ini;
-            t_fins(end+1) = t_trans_ini + dur;
-        end
-
+        tipos_completos{end+1} = tipos_tramos(i);
+        t_inis(end+1) = tramos_tiempos(i);
+        t_fins(end+1) = tramos_tiempos(i+1);
         if i < length(tipos_tramos)
             tipo_trans = tipos_tramos(i) + "_" + tipos_tramos(i+1);
             t_trans_ini = tramos_tiempos(i+1);
@@ -87,59 +84,49 @@ for s = 1:length(sigmas)
                     break;
                 end
             end
-            %if isnan(dur), dur = tiempo(end) - t_trans_ini; end
-            if isnan(dur)
-                dur = tiempo(end) - t_ini;
+            if isnan(dur), dur = tiempo(end) - t_trans_ini; end
+            dur_max = tramos_tiempos(i+2) - t_trans_ini;
+            dur = min(dur, dur_max);
+            [~, umbral] = limites_transicion(tipo_trans, 0);
+            if dur > umbral
+                tipos_completos{end+1} = tipo_trans + "_1";
+                t_inis(end+1) = t_trans_ini;
+                t_fins(end+1) = t_trans_ini + umbral;
+                tipos_completos{end+1} = tipo_trans + "_2";
+                t_inis(end+1) = t_trans_ini + umbral;
+                t_fins(end+1) = t_trans_ini + dur;
+            else
+                tipos_completos{end+1} = tipo_trans;
+                t_inis(end+1) = t_trans_ini;
+                t_fins(end+1) = t_trans_ini + dur;
             end
-    % Nueva línea para no exceder duración del siguiente tramo
-    dur_max = tramos_tiempos(i+2) - t_ini;
-    dur = min(dur, dur_max);
-
-            tipos_completos{end+1} = tipo_trans;
-            t_inis(end+1) = t_trans_ini;
-            t_fins(end+1) = t_trans_ini + dur;
         end
     end
 
-    % Acumuladores de incumplimiento
     incumpl_long = 0; incumpl_trans = 0; incumpl_vel = 0; incumpl_rumbo = 0;
     total_puntos = 0;
-
     for i = 1:length(tipos_completos)
         tipo = tipos_completos{i};
-        t0 = t_inis(i);
-        t1 = t_fins(i);
-        dur = t1 - t0;
+        t0 = t_inis(i); t1 = t_fins(i);
         idx = find(tiempo >= t0 & tiempo <= t1);
         total_puntos = total_puntos + length(idx);
-
-        % if tipo == "uniforme" || tipo == "giro" || tipo == "acelerado"
-        %     L = limites_tramos();
-        %     lim = L.(tipo);
-        % else
-        %     lim = limites_transicion(tipo, dur);
-        % end
         if tipo == "uniforme" || tipo == "giro" || tipo == "acelerado"
-            L = limites_tramos();
-            lim = L.(tipo);
+            L = limites_tramos(); lim = L.(tipo);
         elseif endsWith(tipo, "_1")
             base = extractBefore(tipo, "_1");
-            [lim, ~] = limites_transicion(base, 0);  % antes del umbral
+            [lim, ~] = limites_transicion(base, 0);
         elseif endsWith(tipo, "_2")
             base = extractBefore(tipo, "_2");
-            [lim, ~] = limites_transicion(base, 999);  % después del umbral
+            [lim, ~] = limites_transicion(base, 999);
         else
-            [lim, ~] = limites_transicion(tipo, dur);
+            [lim, ~] = limites_transicion(tipo, t1 - t0);
         end
-
-
         incumpl_long = incumpl_long + sum(errLong_RMS(idx) > lim.long);
         incumpl_trans = incumpl_trans + sum(errTrans_RMS(idx) > lim.trans);
         incumpl_vel = incumpl_vel + sum(errVel_RMS(idx) > lim.vel);
         incumpl_rumbo = incumpl_rumbo + sum(errRumbo_RMS(idx) > lim.rumbo);
     end
 
-    % Guardar resultados
     resultados = [resultados; sigma_a, ...
         100*incumpl_long/total_puntos, ...
         100*incumpl_trans/total_puntos, ...
@@ -147,23 +134,18 @@ for s = 1:length(sigmas)
         100*incumpl_rumbo/total_puntos];
 end
 
-% Mostrar tabla
 fprintf('\n--- COMPARACIÓN DE INCUMPLIMIENTO PARA DISTINTOS σ_a ---\n');
 fprintf('%8s %10s %10s %10s %10s\n', 'σ_a', 'Long(%)', 'Trans(%)', 'Vel(%)', 'Rumbo(%)');
 for i = 1:size(resultados,1)
     fprintf('%8.2f %10.1f %10.1f %10.1f %10.1f\n', resultados(i,:));
 end
-% Calcular media total de incumplimientos por sigma
 media_incumpl = mean(resultados(:,2:5), 2);
-
-% Buscar el mínimo
 [~, idx_best] = min(media_incumpl);
 mejor_sigma = resultados(idx_best,1);
 mejor_media = media_incumpl(idx_best);
-
-fprintf('\\n>> El mejor valor de σₐ es %.2f con un incumplimiento medio total del %.2f%%\\n', mejor_sigma, mejor_media);
-
-plot(resultados(:,1), mean(resultados(:,2:5), 2), '-o');
+fprintf('\n>> El mejor valor de σₐ es %.2f con un incumplimiento medio total del %.2f%%\n', mejor_sigma, mejor_media);
+plot(resultados(:,1), media_incumpl, '-o');
 xlabel('\sigma_a'); ylabel('Incumplimiento medio [%]');
 title('Incumplimiento medio según \sigma_a');
 grid on;
+

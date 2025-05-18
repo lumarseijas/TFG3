@@ -7,7 +7,7 @@ N = 200;
 
 % Parámetros del filtro
 T = 4;              % Tiempo de muestreo radar [s]
-sigma_a = 1;      % Desviación típica aceleración [m/s^2]
+sigma_a = 3;      % Desviación típica aceleración [m/s^2]
 
 % Generar trayectoria ideal
 [track, radar, projection] = generarTrayectoria();
@@ -43,12 +43,29 @@ for i = 1:N
     erroresAcumulados(i) = errores;
 end
 
-errores = erroresAcumulados(1);
-tiempo = errores.tiempo;
-errLong = errores.longitudinal;
-errTrans = errores.transversal;
-errVel = errores.velocidad;
-errRumbo = errores.rumbo;
+% errores = erroresAcumulados(1);
+% tiempo = errores.tiempo;
+% errLong = errores.longitudinal;
+% errTrans = errores.transversal;
+% errVel = errores.velocidad;
+% errRumbo = errores.rumbo;
+tiempo = erroresAcumulados(1).tiempo;
+errLong = zeros(size(tiempo));
+errTrans = zeros(size(tiempo));
+errVel = zeros(size(tiempo));
+errRumbo = zeros(size(tiempo));
+
+for i = 1:N
+    errLong = errLong + erroresAcumulados(i).longitudinal;
+    errTrans = errTrans + erroresAcumulados(i).transversal;
+    errVel = errVel + erroresAcumulados(i).velocidad;
+    errRumbo = errRumbo + erroresAcumulados(i).rumbo;
+end
+
+errLong = errLong / N;
+errTrans = errTrans / N;
+errVel = errVel / N;
+errRumbo = errRumbo / N;
 
 % Calcular tipos_completos, t_inis, t_fins con división por umbral
 tipos_completos = {};

@@ -5,10 +5,10 @@ addpath(genpath(pwd));
 N = 200;             
 T = 4;               
 
-sigma_a_normal   = 0.01;
-sigma_a_maniobra = 5;
+sigma_a_normal   = 0.03;
+sigma_a_maniobra = 3;
 alpha            = 0.2;
-PFA              = 0.03;
+PFA              = 0.02;
 
 %% 2) Trayectoria ideal
 [track, radar, projection] = generarTrayectoria();
@@ -41,19 +41,25 @@ for i = 1:N
     erroresAcumulados(i) = errores;
 end
 
-%% 4) Análisis con primera ejecución
-errores = erroresAcumulados(1);
-tiempo = errores.tiempo;
-errLong = errores.longitudinal;
-errTrans = errores.transversal;
-errVel = errores.velocidad;
-errRumbo = errores.rumbo;
+%% 4) Análisis 
+tiempo = erroresAcumulados(1).tiempo;
+errLong = zeros(size(tiempo));
+errTrans = zeros(size(tiempo));
+errVel = zeros(size(tiempo));
+errRumbo = zeros(size(tiempo));
 
-% ventana = 1;
-% errLong_RMS = sqrt(movmean(errLong.^2, ventana));
-% errTrans_RMS = sqrt(movmean(errTrans.^2, ventana));
-% errVel_RMS = sqrt(movmean(errVel.^2, ventana));
-% errRumbo_RMS = sqrt(movmean(errRumbo.^2, ventana));
+for i = 1:N
+    errLong = errLong + erroresAcumulados(i).longitudinal;
+    errTrans = errTrans + erroresAcumulados(i).transversal;
+    errVel = errVel + erroresAcumulados(i).velocidad;
+    errRumbo = errRumbo + erroresAcumulados(i).rumbo;
+end
+
+errLong = errLong / N;
+errTrans = errTrans / N;
+errVel = errVel / N;
+errRumbo = errRumbo / N;
+
 
 %% 5) Segmentación tramos + transiciones
 tipos_completos = {};
