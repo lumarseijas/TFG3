@@ -1,16 +1,12 @@
+function resultados = montecarlo_maniobra_f(sigma_a_normal, sigma_a_maniobra, alpha, PFA)
 % MONTECARLO con filtro Kalman con detección de maniobra
+
 addpath(genpath(pwd));
 
 %% 1) Parámetros
 N = 200;             
 T = 4;               
 
-sigma_a_normal   = 0.03;
-sigma_a_maniobra = 22;
-alpha            = 0.52;
-PFA              = 5.5e-02;
-
-%% 2) Trayectoria ideal
 [track, radar, projection] = generarTrayectoria();
 target_ideal = ideal_measurement(track, radar, projection);
 
@@ -104,10 +100,6 @@ for i = 1:length(tipos_tramos)
 end
 
 %% 6) Tabla resumen RMS
-fprintf('## Análisis por Tramos y Transiciones (Filtro con Maniobra)\n\n');
-fprintf('| # | Tipo              | Duración (s) | Long (RMS / Max) | Trans (RMS / Max) | Vel (RMS / Max) | Rumbo (RMS / Max) |\n');
-fprintf('|----|-------------------|--------------|-------------------|--------------------|------------------|--------------------|\n');
-
 for i = 1:length(tipos_completos)
     tipo = tipos_completos{i};
     t0 = t_inis(i);
@@ -132,27 +124,27 @@ for i = 1:length(tipos_completos)
     rmsV = sqrt(mean(errVel(idx).^2));
     rmsR = sqrt(mean(errRumbo(idx).^2));
     tipo_disp = erase(tipo, ["_1", "_2"]);
-
-    fprintf('| %2d | %-17s | %10.1f | %7.2f / %-5.0f   | %7.2f / %-5.0f    | %6.2f / %-4.1f    | %6.2f / %-4.1f    |\n', ...
-        i, tipo_disp, dur, rmsL, lim.long, rmsT, lim.trans, rmsV, lim.vel, rmsR, lim.rumbo);
 end
 % RMS instantáneo
+%% RMS instantáneo y % de incumplimiento por métrica
 ventana = 1;
 errLong_RMS = sqrt(movmean(errLong.^2, ventana));
 errTrans_RMS = sqrt(movmean(errTrans.^2, ventana));
 errVel_RMS = sqrt(movmean(errVel.^2, ventana));
 errRumbo_RMS = sqrt(movmean(errRumbo.^2, ventana));
 
-%% 7) Porcentajes de incumplimiento
-fprintf('\n## Porcentaje de Incumplimiento EUROCONTROL\n\n');
-fprintf('| Segmento           | Duración (s) | Longitud (%%) | Transversal (%%) | Velocidad (%%) | Rumbo (%%) |\n');
-fprintf('|--------------------|--------------|----------------|-------------------|----------------|------------|\n');
+% Inicializar contadores
+total_puntos = 0;
+fallos_long = 0;
+fallos_trans = 0;
+fallos_vel = 0;
+fallos_rumbo = 0;
 
 for i = 1:length(tipos_completos)
     tipo = tipos_completos{i};
     t0 = t_inis(i); t1 = t_fins(i);
-    dur = t1 - t0;
     idx = find(tiempo >= t0 & tiempo <= t1);
+    total_puntos = total_puntos + length(idx);
 
     if tipo == "uniforme" || tipo == "giro" || tipo == "acelerado"
         L = limites_tramos(); lim = L.(tipo);
@@ -163,32 +155,23 @@ for i = 1:length(tipos_completos)
         base = extractBefore(tipo, "_2");
         [lim, ~] = limites_transicion(base, 999);
     else
-        [lim, ~] = limites_transicion(tipo, dur);
+        [lim, ~] = limites_transicion(tipo, t1 - t0);
     end
 
-    pLong = mean(errLong_RMS(idx) > lim.long)*100;
-    pTrans = mean(errTrans_RMS(idx) > lim.trans)*100;
-    pVel = mean(errVel_RMS(idx) > lim.vel)*100;
-    pRumbo = mean(errRumbo_RMS(idx) > lim.rumbo)*100;
-
-    fprintf('| %-18s | %10.1f | %12.1f | %15.1f | %13.1f | %10.1f |\n', ...
-        tipo, dur, pLong, pTrans, pVel, pRumbo);
+    fallos_long  = fallos_long  + sum(errLong_RMS(idx) > lim.long);
+    fallos_trans = fallos_trans + sum(errTrans_RMS(idx) > lim.trans);
+    fallos_vel   = fallos_vel   + sum(errVel_RMS(idx) > lim.vel);
+    fallos_rumbo = fallos_rumbo + sum(errRumbo_RMS(idx) > lim.rumbo);
 end
 
-%% 8) Gráficas RMS
-figure;
-subplot(2,2,1); hold on; plot(tiempo, errLong_RMS, 'r'); ylabel('Longitudinal RMS [m]'); title('Longitudinal RMS'); grid on;
-subplot(2,2,2); hold on; plot(tiempo, errTrans_RMS, 'r'); ylabel('Transversal RMS [m]'); title('Transversal RMS'); grid on;
-subplot(2,2,3); hold on; plot(tiempo, errRumbo_RMS, 'r'); ylabel('Rumbo RMS [°]'); xlabel('Tiempo [s]'); title('Rumbo RMS'); grid on;
-subplot(2,2,4); hold on; plot(tiempo, errVel_RMS, 'r'); ylabel('Velocidad RMS [m/s]'); xlabel('Tiempo [s]'); title('Velocidad RMS'); grid on;
+% Calcular % de incumplimiento por métrica
+p_long  = 100 * fallos_long  / total_puntos;
+p_trans = 100 * fallos_trans / total_puntos;
+p_vel   = 100 * fallos_vel   / total_puntos;
+p_rumbo = 100 * fallos_rumbo / total_puntos;
 
-ax = gobjects(4,1);
-for k = 1:4, ax(k) = subplot(2,2,k); end
-for t = tramos_tiempos(2:end-1)
-    for k = 1:4
-        xline(ax(k), t, 'k--');
-    end
-end
-dibujar_eurocontrol(ax, tiempo, tipos_completos, t_inis, t_fins);
-sgtitle(sprintf('Filtro Kalman con maniobra (\\sigma_n = %.2f, \\sigma_m = %.2f, \\alpha = %.2f, PFA = %.2f)', ...
-    sigma_a_normal, sigma_a_maniobra, alpha, PFA));
+% Guardar resultados finales
+resultados.rms_total = mean([mean(errLong_RMS), mean(errTrans_RMS), mean(errVel_RMS), mean(errRumbo_RMS)]);
+resultados.porc_incumplimiento = mean([p_long, p_trans, p_vel, p_rumbo]);
+resultados.incumplimiento = struct('long', p_long, 'trans', p_trans, 'vel', p_vel, 'rumbo', p_rumbo);
+resultados.params = struct('sigma_n', sigma_a_normal, 'sigma_m', sigma_a_maniobra, 'alpha', alpha, 'PFA', PFA);
