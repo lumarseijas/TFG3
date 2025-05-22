@@ -104,7 +104,6 @@ RMS total   = 9.23
 
 <img src="img/montecarlo_maniobra.png" width="1000"/>
 
-σa normal: 0.05, σa maniobra: 10.00, α: 0.20, PFA: 0.05
 
 ## Análisis por Tramos y Transiciones (Filtro con Maniobra)
 

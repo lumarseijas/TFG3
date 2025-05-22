@@ -127,8 +127,8 @@ for i = 1:length(tipos_completos)
         [lim, ~] = limites_transicion(tipo, dur);
     end
 
-    rmsL = sqrt(mean(errLong(idx).^2));
-    rmsT = sqrt(mean(errTrans(idx).^2));
+    rmsL = sqrt(mean(errLong(idx)));
+    rmsT = sqrt(mean(errTrans(idx)));
     rmsV = sqrt(mean(errVel(idx).^2));
     rmsR = sqrt(mean(errRumbo(idx).^2));
     tipo_disp = erase(tipo, ["_1", "_2"]);
@@ -138,8 +138,8 @@ for i = 1:length(tipos_completos)
 end
 % RMS instantáneo
 ventana = 1;
-errLong_RMS = sqrt(movmean(errLong.^2, ventana));
-errTrans_RMS = sqrt(movmean(errTrans.^2, ventana));
+errLong_RMS = sqrt(movmean(errLong, ventana));
+errTrans_RMS = sqrt(movmean(errTrans, ventana));
 errVel_RMS = sqrt(movmean(errVel.^2, ventana));
 errRumbo_RMS = sqrt(movmean(errRumbo.^2, ventana));
 

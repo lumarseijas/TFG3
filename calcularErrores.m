@@ -34,10 +34,10 @@ v_norm = [-sind(ri), cosd(ri)];
 delta_pos = [xe - xi, ye - yi];
 
 % Proyección sobre dirección tangente (error longitudinal)
-err_long = sum(delta_pos .* v_dir, 2);
+err_long = sum((delta_pos .* v_dir).^2, 2);
 
 % Proyección sobre dirección normal (error transversal)
-err_trans = sum(delta_pos .* v_norm, 2);
+err_trans = sum((delta_pos .* v_norm).^2, 2);
 
 % Error en velocidad
 err_vel = ve - vi;

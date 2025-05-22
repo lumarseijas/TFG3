@@ -64,6 +64,6 @@ radar(1).Tini=rand(1,1)*radar(1).Tr;  %Aleatorizacion del tiempo inicial del rad
 target_ideal = ideal_measurement( track, radar, projection );   %Posición ideal de avistamiento
 target_real = real_measurement(target_ideal, radar,1,1,0,0,0,projection);   %GENERACIÓN DE LA MEDIDA CON LOS ERRORES
 
-%plot(target_real.measure(:,13)/1e3,target_real.measure(:,14)/1e3,'+m')
+% plot(target_real.measure(:,13)/1e3,target_real.measure(:,14)/1e3,'+m')
 
 end

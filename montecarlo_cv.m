@@ -32,6 +32,7 @@ erroresAcumulados(N) = struct('longitudinal',[],'transversal',[],'velocidad',[],
 
 % MONTE CARLO
 for i = 1:N
+    radar(1).Tini=rand(1,1)*radar(1).Tr; 
     target = real_measurement(target_ideal, radar, true, true, false, 0, 0, projection);
     estimacion = kalman_cv(target(1), T, sigma_a);
     trkEstimada.posStereo = estimacion.pos;
@@ -135,8 +136,8 @@ for i = 1:length(tipos_completos)
     end
 
     % Calcular RMS
-    rmsL = sqrt(mean(errLong(idx).^2));
-    rmsT = sqrt(mean(errTrans(idx).^2));
+    rmsL = sqrt(mean(errLong(idx)));
+    rmsT = sqrt(mean(errTrans(idx)));
     rmsV = sqrt(mean(errVel(idx).^2));
     rmsR = sqrt(mean(errRumbo(idx).^2));
 
@@ -155,8 +156,8 @@ end
 
 % RMS instantáneo
 ventana = 1;
-errLong_RMS = sqrt(movmean(errLong.^2, ventana));
-errTrans_RMS = sqrt(movmean(errTrans.^2, ventana));
+errLong_RMS = sqrt(movmean(errLong, ventana));
+errTrans_RMS = sqrt(movmean(errTrans, ventana));
 errVel_RMS = sqrt(movmean(errVel.^2, ventana));
 errRumbo_RMS = sqrt(movmean(errRumbo.^2, ventana));
 
