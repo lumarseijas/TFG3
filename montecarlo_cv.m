@@ -7,7 +7,7 @@ N = 200;
 
 % Parámetros del filtro
 T = 4;              % Tiempo de muestreo radar [s]
-sigma_a = 1.1;      % Desviación típica aceleración [m/s^2]
+sigma_a = 5;      % Desviación típica aceleración [m/s^2]
 
 % Generar trayectoria ideal
 [track, radar, projection] = generarTrayectoria();
