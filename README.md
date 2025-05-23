@@ -146,3 +146,91 @@ TOP 10 resultados por combinación:
 | uniforme           |      262.0 |          6.1 |            66.7 |           7.6 |        3.0 |
 
 
+# TRAYECTORIA CON ACELERACIÓN:
+
+## CV
+    Duracion    %Long     %Trans     %Vel     %Rumbo    Sigma          Segmento              SegmentoBase    
+    ________    ______    ______    ______    ______    _____    ____________________    ____________________
+
+        240     61.667        60        20    3.3333    0.05     "uniforme"              "uniforme"          
+     18.418          0         0         0         0    0.05     "uniforme_acelerado"    "uniforme_acelerado"
+        100         76        88        84        36    0.05     "acelerado"             "acelerado"         
+     18.491        100       100       100       100    0.05     "acelerado_uniforme"    "acelerado_uniforme"
+        262     77.273    77.273     96.97    75.758    0.05     "uniforme"              "uniforme"          
+        240     53.333    53.333    8.3333    8.3333     0.1     "uniforme"              "uniforme"          
+     18.418          0         0         0         0     0.1     "uniforme_acelerado"    "uniforme_acelerado"
+        100         72        88        84        48     0.1     "acelerado"             "acelerado"         
+     18.491        100       100       100       100     0.1     "acelerado_uniforme"    "acelerado_uniforme"
+        262     51.515    51.515    93.939    48.485     0.1     "uniforme"              "uniforme"          
+        240        100       100    13.333    6.6667     0.5     "uniforme"              "uniforme"          
+     18.418          0         0         0         0     0.5     "uniforme_acelerado"    "uniforme_acelerado"
+        100         52       100        76        40     0.5     "acelerado"             "acelerado"         
+     18.491         60       100        20         0     0.5     "acelerado_uniforme"    "acelerado_uniforme"
+        262     43.939    39.394    33.333    6.0606     0.5     "uniforme"              "uniforme"          
+        240        100       100    13.333        10     0.8     "uniforme"              "uniforme"          
+     18.418          0         0         0         0     0.8     "uniforme_acelerado"    "uniforme_acelerado"
+        100          0       100        12        12     0.8     "acelerado"             "acelerado"         
+     18.491          0       100         0         0     0.8     "acelerado_uniforme"    "acelerado_uniforme"
+        262     98.485    98.485    40.909    3.0303     0.8     "uniforme"              "uniforme"          
+        240        100       100    8.3333        10       1     "uniforme"              "uniforme"          
+     18.418          0         0         0         0       1     "uniforme_acelerado"    "uniforme_acelerado"
+        100          0       100         0         8       1     "acelerado"             "acelerado"         
+     18.491          0       100         0         0       1     "acelerado_uniforme"    "acelerado_uniforme"
+        262        100       100    43.939    3.0303       1     "uniforme"              "uniforme"          
+        240        100       100        30    6.6667       2     "uniforme"              "uniforme"          
+     18.418          0         0         0         0       2     "uniforme_acelerado"    "uniforme_acelerado"
+        100          0       100         0         0       2     "acelerado"             "acelerado"         
+     18.491          0       100         0         0       2     "acelerado_uniforme"    "acelerado_uniforme"
+        262        100       100    37.879    3.0303       2     "uniforme"              "uniforme"          
+        240        100       100    68.333    13.333       5     "uniforme"              "uniforme"          
+     18.418          0         0         0         0       5     "uniforme_acelerado"    "uniforme_acelerado"
+        100          0       100         0         0       5     "acelerado"             "acelerado"         
+     18.491          0       100         0         0       5     "acelerado_uniforme"    "acelerado_uniforme"
+        262        100       100    63.636    9.0909       5     "uniforme"              "uniforme"          
+        240        100       100    78.333    16.667       7     "uniforme"              "uniforme"          
+     18.418          0        60         0         0       7     "uniforme_acelerado"    "uniforme_acelerado"
+        100          0       100         0         0       7     "acelerado"             "acelerado"         
+     18.491          0       100         0         0       7     "acelerado_uniforme"    "acelerado_uniforme"
+        262        100       100    65.152    10.606       7     "uniforme"              "uniforme"          
+        240        100       100    83.333        35      10     "uniforme"              "uniforme"          
+     18.418          0       100         0         0      10     "uniforme_acelerado"    "uniforme_acelerado"
+        100          0       100         0         0      10     "acelerado"             "acelerado"         
+     18.491          0       100         0         0      10     "acelerado_uniforme"    "acelerado_uniforme"
+        262        100       100    71.212    12.121      10     "uniforme"              "uniforme"          
+        240        100       100    96.667        50      15     "uniforme"              "uniforme"          
+     18.418          0       100         0         0      15     "uniforme_acelerado"    "uniforme_acelerado"
+        100          0       100         0         0      15     "acelerado"             "acelerado"         
+     18.491          0       100         0         0      15     "acelerado_uniforme"    "acelerado_uniforme"
+        262        100       100    84.848    16.667      15     "uniforme"              "uniforme"          
+
+Mejores sigmas por segmento:
+- acelerado: 2
+- acelerado_uniforme: 0.8000
+- uniforme: 0.5000
+- uniforme_acelerado: 0.0500
+
+**Mejor sigma global: 1**
+---
+
+### Análisis por Tramos y Transiciones (σₐ = 1.0)
+
+| # | Tipo              | Duración (s) | Long (RMS / Max) | Trans (RMS / Max) | Vel (RMS / Max) | Rumbo (RMS / Max) |
+|----|-------------------|--------------|-------------------|--------------------|------------------|--------------------|
+|  1 | uniforme          |      240.0 |  101.83 / 60      |  101.63 / 60       |   4.85 / 0.6     |  17.34 / 0.7     |
+|  2 | uniforme_acelerado |       19.1 |   86.39 / 310     |   85.73 / 120      |   7.69 / 26.0    |   0.19 / 6.0     |
+|  3 | acelerado         |      100.0 |  112.31 / 180     |  111.25 / 60       |  13.50 / 17.0    |   0.95 / 1.5     |
+|  4 | acelerado_uniforme |        0.0 |     NaN / Inf     |     NaN / Inf      |    NaN / Inf     |    NaN / Inf     |
+|  5 | acelerado_uniforme |       19.2 |  103.79 / 180     |  102.66 / 60       |   7.77 / 17.0    |   0.53 / 1.5     |
+|  6 | uniforme          |      262.0 |   72.97 / 60      |   72.27 / 60       |   2.03 / 0.6     |   0.45 / 0.7     |
+### Porcentaje de Incumplimiento EUROCONTROL (σₐ = 1.0)
+
+| Segmento           | Duración (s) | Longitud (%) | Transversal (%) | Velocidad (%) | Rumbo (%) |
+|--------------------|--------------|----------------|-------------------|----------------|------------|
+| uniforme           |      240.0 |        100.0 |           100.0 |          24.6 |       16.4 |
+| uniforme_acelerado |       19.1 |          0.0 |             0.0 |           0.0 |        0.0 |
+| acelerado          |      100.0 |          0.0 |           100.0 |           0.0 |        0.0 |
+| acelerado_uniforme_1 |        0.0 |          NaN |             NaN |           NaN |        NaN |
+| acelerado_uniforme_2 |       19.2 |          0.0 |           100.0 |           0.0 |        0.0 |
+| uniforme           |      262.0 |        100.0 |           100.0 |          38.5 |        0.0 |
+
+## MANIOBRA
