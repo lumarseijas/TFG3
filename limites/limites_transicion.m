@@ -60,6 +60,14 @@ switch tipo
             L.long = 310;
             L.vel = 26;
         end
+    case "acelerado_uniforme"
+        umbral = 0;
+        if duracion > umbral
+            L.long = 180;
+            L.trans = 60;
+            L.vel = 17;
+            L.rumbo = 1.5;
+        end
     otherwise
         error('Tipo de transición no reconocido');
 end
