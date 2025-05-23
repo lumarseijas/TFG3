@@ -5,10 +5,10 @@ addpath(genpath(pwd));
 N = 200;             
 T = 4;               
 
-sigma_a_normal   = 0.04;
-sigma_a_maniobra = 23;
+sigma_a_normal   = 0.07;
+sigma_a_maniobra = 15;
 alpha            = 0.5;
-PFA              = 2.5e-02;
+PFA              = 5.0e-02;
 
 %% 2) Trayectoria ideal
 [track, radar, projection] = generarTrayectoria();

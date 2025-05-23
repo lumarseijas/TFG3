@@ -4,10 +4,10 @@
 %clc; clear;
 
 % Valores a probar
-sigma_n_vals = [0.04, 0.05, 0.08];
-sigma_m_vals = [8, 9, 10, 11, 12, 13, 14, 15, 16,  19, 20];
-alpha_vals = [0.4, 0.50, 0.6, 0.7];
-PFA_vals = [0.02, 0.05, 0.07];
+sigma_n_vals = [0.04, 0.05, 0.06, 0.07, 0.08];
+sigma_m_vals = [10, 11, 12, 13, 14, 15, 17, 19, 20];
+alpha_vals = [0.4, 0.5, 0.6, 0.7];
+PFA_vals = [0.02, 0.05, 0.07, 0.1];
 
 
 % Inicializar resultados
