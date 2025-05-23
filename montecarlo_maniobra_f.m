@@ -26,6 +26,7 @@ end
 %% 3) Simulación Monte Carlo
 erroresAcumulados(N) = struct('longitudinal',[],'transversal',[],'velocidad',[],'rumbo',[],'tiempo',[]);
 for i = 1:N
+    radar(1).Tini=rand(1,1)*radar(1).Tr; 
     target = real_measurement(target_ideal, radar, true, true, false, 0, 0, projection);
     estimacion = kalman_maniobra(target(1), T, sigma_a_normal, sigma_a_maniobra, alpha, PFA);
     trkEstimada.posStereo = estimacion.pos;
@@ -119,8 +120,8 @@ for i = 1:length(tipos_completos)
         [lim, ~] = limites_transicion(tipo, dur);
     end
 
-    rmsL = sqrt(mean(errLong(idx).^2));
-    rmsT = sqrt(mean(errTrans(idx).^2));
+    rmsL = sqrt(mean(errLong(idx)));
+    rmsT = sqrt(mean(errTrans(idx)));
     rmsV = sqrt(mean(errVel(idx).^2));
     rmsR = sqrt(mean(errRumbo(idx).^2));
     tipo_disp = erase(tipo, ["_1", "_2"]);
@@ -128,8 +129,8 @@ end
 % RMS instantáneo
 %% RMS instantáneo y % de incumplimiento por métrica
 ventana = 1;
-errLong_RMS = sqrt(movmean(errLong.^2, ventana));
-errTrans_RMS = sqrt(movmean(errTrans.^2, ventana));
+errLong_RMS = sqrt(movmean(errLong, ventana));
+errTrans_RMS = sqrt(movmean(errTrans, ventana));
 errVel_RMS = sqrt(movmean(errVel.^2, ventana));
 errRumbo_RMS = sqrt(movmean(errRumbo.^2, ventana));
 

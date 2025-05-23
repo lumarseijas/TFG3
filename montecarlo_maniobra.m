@@ -5,10 +5,10 @@ addpath(genpath(pwd));
 N = 200;             
 T = 4;               
 
-sigma_a_normal   = 0.03;
-sigma_a_maniobra = 22;
-alpha            = 0.52;
-PFA              = 5.5e-02;
+sigma_a_normal   = 0.04;
+sigma_a_maniobra = 23;
+alpha            = 0.5;
+PFA              = 2.5e-02;
 
 %% 2) Trayectoria ideal
 [track, radar, projection] = generarTrayectoria();
@@ -30,6 +30,7 @@ end
 %% 3) Simulación Monte Carlo
 erroresAcumulados(N) = struct('longitudinal',[],'transversal',[],'velocidad',[],'rumbo',[],'tiempo',[]);
 for i = 1:N
+    radar(1).Tini=rand(1,1)*radar(1).Tr; 
     target = real_measurement(target_ideal, radar, true, true, false, 0, 0, projection);
     estimacion = kalman_maniobra(target(1), T, sigma_a_normal, sigma_a_maniobra, alpha, PFA);
     trkEstimada.posStereo = estimacion.pos;

@@ -1,8 +1,8 @@
 
-%clear; close all; clc;
+clear; close all; clc;
 addpath(genpath(pwd));
 
-sigmas = [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 3.0 5.0 7.0 9.0 10.0];  % valores a probar
+sigmas = [0.1 0.5 0.7 0.8 0.9 0.95 1.0 1.05 1.1 1.2 1.5 2.0 5.0 7.0 10.0];  % valores a probar
 T = 4;              % Tiempo de muestreo radar [s]
 N = 200;            % Número de simulaciones Monte Carlo
 
@@ -31,6 +31,7 @@ for s = 1:length(sigmas)
     erroresAcumulados(N) = struct('longitudinal',[],'transversal',[],'velocidad',[],'rumbo',[],'tiempo',[]);
 
     for i = 1:N
+        radar(1).Tini=rand(1,1)*radar(1).Tr;
         target = real_measurement(target_ideal, radar, true, true, false, 0, 0, projection);
         estimacion = kalman_cv(target(1), T, sigma_a);
         trkEstimada.posStereo = estimacion.pos;
@@ -48,20 +49,22 @@ for s = 1:length(sigmas)
     errTrans = zeros(size(tiempo));
     errVel = zeros(size(tiempo));
     errRumbo = zeros(size(tiempo));
+    
     for i = 1:N
         errLong = errLong + erroresAcumulados(i).longitudinal;
         errTrans = errTrans + erroresAcumulados(i).transversal;
         errVel = errVel + erroresAcumulados(i).velocidad;
         errRumbo = errRumbo + erroresAcumulados(i).rumbo;
     end
+    
     errLong = errLong / N;
     errTrans = errTrans / N;
     errVel = errVel / N;
     errRumbo = errRumbo / N;
 
     ventana = 1;
-    errLong_RMS = sqrt(movmean(errLong.^2, ventana));
-    errTrans_RMS = sqrt(movmean(errTrans.^2, ventana));
+    errLong_RMS = sqrt(movmean(errLong, ventana));
+    errTrans_RMS = sqrt(movmean(errTrans, ventana));
     errVel_RMS = sqrt(movmean(errVel.^2, ventana));
     errRumbo_RMS = sqrt(movmean(errRumbo.^2, ventana));
 
@@ -84,6 +87,7 @@ for s = 1:length(sigmas)
                     break;
                 end
             end
+            
             if isnan(dur), dur = tiempo(end) - t_trans_ini; end
             dur_max = tramos_tiempos(i+2) - t_trans_ini;
             dur = min(dur, dur_max);
