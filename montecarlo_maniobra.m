@@ -5,8 +5,8 @@ addpath(genpath(pwd));
 N = 200;             
 T = 4;               
 
-sigma_a_normal   = 0.07;
-sigma_a_maniobra = 15;
+sigma_a_normal   = 0.05;
+sigma_a_maniobra = 14;
 alpha            = 0.5;
 PFA              = 5.0e-02;
 

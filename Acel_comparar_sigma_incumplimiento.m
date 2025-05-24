@@ -1,6 +1,6 @@
 addpath(genpath(pwd));
 
-sigmas = [0.05 0.1 0.5 0.8 1.0 2.0 5.0 7.0 10.0 15.0];
+sigmas = [0.01 0.03 0.05 0.1 0.3 0.5 0.8 1.0 2.0 3.0 5.0 7.0 10.0 12.0 15.0];
 T = 4;
 N = 200;
 
@@ -56,12 +56,18 @@ for s = 1:length(sigmas)
 
     tipos_completos = {}; t_inis = []; t_fins = [];
     for i = 1:length(tipos_tramos)
-        tipos_completos{end+1} = tipos_tramos(i);
+        tipo_base = tipos_tramos(i);
+        if tipo_base == "uniforme" && (i == 1 || i == length(tipos_tramos))
+            tipo = tipo_base + "(" + num2str(i) + ")";
+        else
+            tipo = tipo_base;
+        end
+        tipos_completos{end+1} = tipo;
         t_inis(end+1) = tramos_tiempos(i);
         t_fins(end+1) = tramos_tiempos(i+1);
 
         if i < length(tipos_tramos)
-            tipo_trans = tipos_tramos(i) + "_" + tipos_tramos(i+1);
+            tipo_trans = tipos_tramos(i) + " → " + tipos_tramos(i+1);
             t_trans_ini = tramos_tiempos(i+1);
             idx_start = find(tiempo >= t_trans_ini, 1);
             dur = NaN;
@@ -74,16 +80,10 @@ for s = 1:length(sigmas)
             if isnan(dur), dur = tiempo(end) - t_trans_ini; end
             dur_max = tramos_tiempos(i+2) - t_trans_ini;
             dur = min(dur, dur_max);
-            [~, umbral] = limites_transicion(tipo_trans, 0);
-            if dur > umbral
-                tipos_completos{end+1} = tipo_trans;
-                t_inis(end+1) = t_trans_ini;
-                t_fins(end+1) = t_trans_ini + dur;
-            else
-                tipos_completos{end+1} = tipo_trans;
-                t_inis(end+1) = t_trans_ini;
-                t_fins(end+1) = t_trans_ini + dur;
-            end
+            [~, umbral] = limites_transicion(tipos_tramos(i) + "_" + tipos_tramos(i+1), 0);
+            tipos_completos{end+1} = tipo_trans;
+            t_inis(end+1) = t_trans_ini;
+            t_fins(end+1) = t_trans_ini + dur;
         end
     end
 
@@ -95,12 +95,22 @@ for s = 1:length(sigmas)
         idx = find(tiempo >= t0 & tiempo <= t1);
         dur = t1 - t0;
 
-        if tipo == "uniforme" || tipo == "giro" || tipo == "acelerado"
-            L = limites_tramos(); lim = L.(tipo);
-        elseif contains(tipo, "_")
-            base = tipo; [lim, ~] = limites_transicion(base, dur);
+        tipo_limpio = tipo;
+        if contains(tipo, "(")
+            tipo_limpio = "uniforme";
+        elseif contains(tipo, " → ")
+            tipo_limpio = strrep(tipo, " → ", "_");
+        end
+
+        if ismember(tipo_limpio, ["uniforme", "giro", "acelerado"])
+            L = limites_tramos(); lim = L.(tipo_limpio);
         else
-            [lim, ~] = limites_transicion(tipo, dur);
+            try
+                [lim, ~] = limites_transicion(tipo_limpio, dur);
+            catch
+                warning("Tipo no reconocido en limites_transicion: %s", tipo_limpio);
+                continue;
+            end
         end
 
         datos_segmentos(i,:) = [dur,
@@ -117,29 +127,27 @@ for s = 1:length(sigmas)
     resultadosGlobales = [resultadosGlobales; tabla_sigma];
 end
 
-% Unificar segmentos _1 y _2
-segmentos_base = erase(string(resultadosGlobales.Segmento), ["_1", "_2"]);
-resultadosGlobales.SegmentoBase = segmentos_base;
+segmentos = unique(resultadosGlobales.Segmento);
+mejores_sigma_tabla = table('Size',[0 2],'VariableTypes',{'string','double'},'VariableNames',{'Segmento','SigmaOptima'});
 
-% Encontrar mejor sigma por segmento base
-segmentos = unique(resultadosGlobales.SegmentoBase);
 for i = 1:length(segmentos)
     seg = segmentos(i);
-    subtabla = resultadosGlobales(resultadosGlobales.SegmentoBase == seg, :);
+    subtabla = resultadosGlobales(resultadosGlobales.Segmento == seg, :);
     subtabla.MediaIncumpl = mean(subtabla{:,2:5},2);
     [~, idxBest] = min(subtabla.MediaIncumpl);
-    mejores_sigma.(seg) = subtabla.Sigma(idxBest);
+    mejores_sigma_tabla = [mejores_sigma_tabla; {seg, subtabla.Sigma(idxBest)}];
 end
 
-% Mostrar resultados
-disp(resultadosGlobales);
-disp("Mejores sigmas por segmento:");
-disp(mejores_sigma);
+% Mostrar resultados finales
+fprintf('\nSegmento\t\t\tSigma óptima\n');
+for i = 1:height(mejores_sigma_tabla)
+    fprintf('%-20s\t%.4f\n', mejores_sigma_tabla.Segmento(i), mejores_sigma_tabla.SigmaOptima(i));
+end
 
-% Calcular mejor sigma global
+% Sigma global
 mediaPorSigma = varfun(@mean, resultadosGlobales, 'InputVariables', {'%Long','%Trans','%Vel','%Rumbo'}, 'GroupingVariables','Sigma');
 mediaPorSigma.IncumplMedio = mean(mediaPorSigma{:,3:6}, 2);
 [~, idxGlobal] = min(mediaPorSigma.IncumplMedio);
 mejorSigmaGlobal = mediaPorSigma.Sigma(idxGlobal);
-disp("Mejor sigma global:");
+disp("\nMejor sigma global:");
 disp(mejorSigmaGlobal);

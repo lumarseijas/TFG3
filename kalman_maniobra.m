@@ -84,7 +84,7 @@ for k = 2:N
          0      T^2/2;
          T      0;
          0      T];
-    Q = (sigma_a^2) * (G * G');
+    Q = (sigma_a.^2) * (G * G');
 
     % 8.3) Predicción
     x_pred = F * x_est;

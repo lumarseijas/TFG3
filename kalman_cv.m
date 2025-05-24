@@ -30,7 +30,7 @@ G = [T^2/2 0;
      0 T^2/2;
      T    0;
      0    T];
-Q = (sigma_a^2) * (G * G');
+Q = (sigma_a.^2) * (G * G');
 
 % 4) Estado inicial: posición y velocidad estimada
 x0 = medidas(1,:)';  % posición

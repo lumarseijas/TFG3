@@ -4,10 +4,10 @@
 %clc; clear;
 
 % Valores a probar
-sigma_n_vals = [0.07, 0.08];
-sigma_m_vals = [14, 15];
-alpha_vals = [0.4, 0.5];
-PFA_vals = [0.05, 0.07];
+sigma_n_vals = [0.02, 0.04, 0.05, 0.06, 0.07, 0.08];
+sigma_m_vals = [8, 9, 10, 11, 12, 13, 14];
+alpha_vals = [0.1, 0.2, 0.4, 0.5, 0.6];
+PFA_vals = [0.02, 0.05, 0.07];
 
 
 % Inicializar resultados
@@ -27,7 +27,7 @@ for sigma_n = sigma_n_vals
                         contador, total_comb, sigma_n, sigma_m, alpha, PFA);
 
                 try
-                    res = montecarlo_maniobra_f(sigma_n, sigma_m, alpha, PFA);
+                    res = montecarlo_maniobra_acel_f(sigma_n, sigma_m, alpha, PFA);
                     resultados(end+1,:) = [sigma_n, sigma_m, alpha, PFA, ...
                                            res.rms_total, res.porc_incumplimiento];
                 catch ME
@@ -99,7 +99,7 @@ fprintf('- Mejor PFA medio = %.1e (con %.2f%% incumplimiento medio)\n', ...
     medias_pfa.PFA(idx_pfa), medias_pfa.mean_Porc_incumplimiento(idx_pfa));
 
 %% Detalle de la mejor combinación
-mejor_resultado = montecarlo_maniobra_f(mejor.sigma_n, mejor.sigma_m, mejor.alpha, mejor.PFA); 
+mejor_resultado = montecarlo_maniobra_acel_f(mejor.sigma_n, mejor.sigma_m, mejor.alpha, mejor.PFA); 
 fprintf('\n Detalle de incumplimiento por métrica (mejor combinación):\n');
 fprintf('- Longitudinal:   %.2f %%\n', mejor_resultado.incumplimiento.long);
 fprintf('- Transversal:    %.2f %%\n', mejor_resultado.incumplimiento.trans);
